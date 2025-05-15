@@ -77,6 +77,31 @@ class _DatabaseViewScreenState extends State<DatabaseViewScreen> {
         backgroundColor: Colors.green.shade700,
         actions: [
           IconButton(
+            icon: const Icon(Icons.delete, color: Colors.white),
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Delete All Data'),
+                  content: const Text('Are you sure you want to delete all data from the database? This action cannot be undone.'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        Navigator.pop(context);
+                        await _clearAllData();
+                      },
+                      child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _refreshAndStoreData,
           ),
@@ -174,5 +199,31 @@ class _DatabaseViewScreenState extends State<DatabaseViewScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _clearAllData() async {
+    try {
+      final box = await Hive.openBox<PlantData>('plantData');
+      await box.clear();
+      await _loadDatabaseContents(); // Reload the view
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('All data has been deleted'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error clearing database: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error deleting data'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 } 
