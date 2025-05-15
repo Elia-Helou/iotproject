@@ -23,13 +23,14 @@ class PlantDataAdapter extends TypeAdapter<PlantData> {
       waterLevel: fields[3] as double,
       airQuality: fields[4] as double,
       light: fields[5] as double,
+      timestamp: fields[6] as DateTime?,
     );
   }
 
   @override
   void write(BinaryWriter writer, PlantData obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(7)
       ..writeByte(0)
       ..write(obj.temperature)
       ..writeByte(1)
@@ -41,7 +42,9 @@ class PlantDataAdapter extends TypeAdapter<PlantData> {
       ..writeByte(4)
       ..write(obj.airQuality)
       ..writeByte(5)
-      ..write(obj.light);
+      ..write(obj.light)
+      ..writeByte(6)
+      ..write(obj.timestamp);
   }
 
   @override

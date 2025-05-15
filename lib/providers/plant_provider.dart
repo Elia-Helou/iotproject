@@ -43,8 +43,17 @@ class PlantProvider with ChangeNotifier {
       final newData = await _apiService.getPlantData();
       _plants = newData;
       
-      // Save to Hive
+      // Save to Hive with timestamps
       final box = await Hive.openBox<PlantData>('plantData');
+      
+      // Store historical data with timestamp as part of the key
+      for (var entry in newData.entries) {
+        final timestamp = entry.value.timestamp.millisecondsSinceEpoch;
+        final key = '${entry.key}_$timestamp';
+        await box.put(key, entry.value);
+      }
+      
+      // Also store the latest data with simple keys for quick access
       await box.putAll(newData);
       
       _error = null;
@@ -82,6 +91,8 @@ class PlantProvider with ChangeNotifier {
     double airQuality = environmentData['gas']?.toDouble() ?? 0.0;
     double waterLevel = environmentData['waterTank'] == true ? 100.0 : 0.0;
 
+    final now = DateTime.now();
+
     _plants['plant1'] = PlantData(
       temperature: temperature,
       humidity: humidity,
@@ -89,6 +100,7 @@ class PlantProvider with ChangeNotifier {
       waterLevel: waterLevel,
       airQuality: airQuality,
       light: plant1Data['light']?.toDouble() ?? 0.0,
+      timestamp: now,
     );
 
     _plants['plant2'] = PlantData(
@@ -98,6 +110,7 @@ class PlantProvider with ChangeNotifier {
       waterLevel: waterLevel,
       airQuality: airQuality,
       light: plant2Data['light']?.toDouble() ?? 0.0,
+      timestamp: now,
     );
 
     _environmentData = environmentData;
@@ -109,6 +122,15 @@ class PlantProvider with ChangeNotifier {
   Future<void> _saveToHive() async {
     try {
       final box = await Hive.openBox<PlantData>('plantData');
+      
+      // Store historical data
+      for (var entry in _plants.entries) {
+        final timestamp = entry.value.timestamp.millisecondsSinceEpoch;
+        final key = '${entry.key}_$timestamp';
+        await box.put(key, entry.value);
+      }
+      
+      // Store latest data
       await box.putAll(_plants);
     } catch (e) {
       debugPrint('Error saving to Hive: $e');

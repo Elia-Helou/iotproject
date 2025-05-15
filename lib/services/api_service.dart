@@ -41,6 +41,7 @@ class ApiService {
         waterLevel: _getVariation(_baseValues['plant_a']!['water_level']!, 5.0),
         airQuality: _getVariation(_baseValues['plant_a']!['air_quality']!, 5.0),
         light: _getVariation(_baseValues['plant_a']!['light']!, 10.0),
+        timestamp: DateTime.now(),
       ),
       'plant_b': PlantData(
         temperature: _getVariation(_baseValues['plant_b']!['temperature']!, 2.0),
@@ -49,6 +50,7 @@ class ApiService {
         waterLevel: _getVariation(_baseValues['plant_b']!['water_level']!, 5.0),
         airQuality: _getVariation(_baseValues['plant_b']!['air_quality']!, 5.0),
         light: _getVariation(_baseValues['plant_b']!['light']!, 10.0),
+        timestamp: DateTime.now(),
       ),
     };
   }
