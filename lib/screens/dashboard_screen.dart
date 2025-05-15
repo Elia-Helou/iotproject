@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../providers/plant_provider.dart';
 import '../widgets/plant_card.dart';
 import 'plant_detail_screen.dart';
-import 'database_view_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -35,17 +34,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
         ),
         backgroundColor: Colors.green.shade700,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.storage, color: Colors.white),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const DatabaseViewScreen(),
-                ),
-              );
-            },
-          ),
           IconButton(
             icon: const Icon(Icons.refresh, color: Colors.white),
             onPressed: () {
