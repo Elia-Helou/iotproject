@@ -38,7 +38,7 @@ class _DatabaseViewScreenState extends State<DatabaseViewScreen> {
       // Sort by timestamp in descending order (newest first)
       contents.sort((a, b) => b.value.timestamp.compareTo(a.value.timestamp));
       
-      // Group by date
+      // Group by date and timestamp
       final grouped = <String, List<MapEntry<String, PlantData>>>{};
       for (var entry in contents) {
         final date = _dateFormat.format(entry.value.timestamp);
@@ -67,6 +67,45 @@ class _DatabaseViewScreenState extends State<DatabaseViewScreen> {
     // Extract plant name from the key (e.g., "plant_a_1234567890" -> "Plant A")
     final plantId = key.split('_')[0] + '_' + key.split('_')[1];
     return plantId == 'plant_a' ? 'Plant A' : 'Plant B';
+  }
+
+  Future<void> _deleteEntriesByTimestamp(DateTime timestamp) async {
+    try {
+      final box = await Hive.openBox<PlantData>('plantData');
+      final keysToDelete = <String>[];
+      
+      // Find all keys that match this timestamp
+      for (var key in box.keys) {
+        final plantData = box.get(key);
+        if (plantData != null && 
+            plantData.timestamp.millisecondsSinceEpoch == timestamp.millisecondsSinceEpoch) {
+          keysToDelete.add(key.toString());
+        }
+      }
+      
+      // Delete all matching entries
+      await box.deleteAll(keysToDelete);
+      await _loadDatabaseContents(); // Reload the view
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Selected entries have been deleted'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error deleting entries: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error deleting entries'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -116,6 +155,16 @@ class _DatabaseViewScreenState extends State<DatabaseViewScreen> {
                 final date = _groupedData.keys.elementAt(index);
                 final entries = _groupedData[date]!;
                 
+                // Group entries by timestamp
+                final entriesByTimestamp = <DateTime, List<MapEntry<String, PlantData>>>{};
+                for (var entry in entries) {
+                  final timestamp = entry.value.timestamp;
+                  if (!entriesByTimestamp.containsKey(timestamp)) {
+                    entriesByTimestamp[timestamp] = [];
+                  }
+                  entriesByTimestamp[timestamp]!.add(entry);
+                }
+                
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -129,24 +178,19 @@ class _DatabaseViewScreenState extends State<DatabaseViewScreen> {
                         ),
                       ),
                     ),
-                    ...entries.map((entry) {
-                      final plantData = entry.value;
-                      final timestamp = plantData.timestamp;
+                    ...entriesByTimestamp.entries.map((timestampEntry) {
+                      final timestamp = timestampEntry.key;
+                      final plantEntries = timestampEntry.value;
                       
                       return Card(
                         margin: const EdgeInsets.only(bottom: 16),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
+                        child: Column(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                    _getPlantName(entry.key),
-                                    style: Theme.of(context).textTheme.titleLarge,
-                                  ),
                                   Text(
                                     _timeFormat.format(timestamp),
                                     style: const TextStyle(
@@ -154,17 +198,58 @@ class _DatabaseViewScreenState extends State<DatabaseViewScreen> {
                                       color: Colors.grey,
                                     ),
                                   ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete, color: Colors.red),
+                                    onPressed: () {
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) => AlertDialog(
+                                          title: const Text('Delete Entries'),
+                                          content: Text('Delete entries from ${_timeFormat.format(timestamp)}?'),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () => Navigator.pop(context),
+                                              child: const Text('Cancel'),
+                                            ),
+                                            TextButton(
+                                              onPressed: () async {
+                                                Navigator.pop(context);
+                                                await _deleteEntriesByTimestamp(timestamp);
+                                              },
+                                              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                  ),
                                 ],
                               ),
-                              const SizedBox(height: 8),
-                              _buildDataRow('Temperature', '${plantData.temperature}°C'),
-                              _buildDataRow('Humidity', '${plantData.humidity}%'),
-                              _buildDataRow('Moisture', plantData.moisture.toString()),
-                              _buildDataRow('Water Level', '${plantData.waterLevel}%'),
-                              _buildDataRow('Air Quality', plantData.airQuality.toString()),
-                              _buildDataRow('Light', plantData.light.toString()),
-                            ],
-                          ),
+                            ),
+                            ...plantEntries.map((entry) {
+                              final plantData = entry.value;
+                              
+                              return Padding(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _getPlantName(entry.key),
+                                      style: Theme.of(context).textTheme.titleLarge,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    _buildDataRow('Temperature', '${plantData.temperature}°C'),
+                                    _buildDataRow('Humidity', '${plantData.humidity}%'),
+                                    _buildDataRow('Moisture', plantData.moisture.toString()),
+                                    _buildDataRow('Water Level', '${plantData.waterLevel}%'),
+                                    _buildDataRow('Air Quality', plantData.airQuality.toString()),
+                                    _buildDataRow('Light', plantData.light.toString()),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          ],
                         ),
                       );
                     }).toList(),
