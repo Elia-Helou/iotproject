@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/plant_provider.dart';
 import '../widgets/plant_card.dart';
+import '../widgets/environment_card.dart';
 import 'plant_detail_screen.dart';
 import 'database_view_screen.dart';
 
@@ -115,7 +116,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   const SizedBox(height: 16),
                   GestureDetector(
                     onTap: () {
-                      final plantData = provider.plants['plant_a'];
+                      final plantData = provider.plants['plant1'];
                       if (plantData != null) {
                         Navigator.push(
                           context,
@@ -130,13 +131,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     },
                     child: PlantCard(
                       title: 'Plant A',
-                      plantData: provider.plants['plant_a'],
+                      plantData: provider.plants['plant1'],
                     ),
                   ),
                   const SizedBox(height: 16),
                   GestureDetector(
                     onTap: () {
-                      final plantData = provider.plants['plant_b'];
+                      final plantData = provider.plants['plant2'];
                       if (plantData != null) {
                         Navigator.push(
                           context,
@@ -151,8 +152,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     },
                     child: PlantCard(
                       title: 'Plant B',
-                      plantData: provider.plants['plant_b'],
+                      plantData: provider.plants['plant2'],
                     ),
+                  ),
+                  const SizedBox(height: 16),
+                  EnvironmentCard(
+                    environmentData: provider.environmentData,
                   ),
                 ],
               ),

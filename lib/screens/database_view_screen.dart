@@ -30,7 +30,7 @@ class _DatabaseViewScreenState extends State<DatabaseViewScreen> {
       
       for (var key in box.keys) {
         final plantData = box.get(key);
-        if (plantData != null && key.toString().split('_').length > 2) {
+        if (plantData != null) {
           contents.add(MapEntry(key.toString(), plantData));
         }
       }
@@ -64,9 +64,20 @@ class _DatabaseViewScreenState extends State<DatabaseViewScreen> {
   }
 
   String _getPlantName(String key) {
-    // Extract plant name from the key (e.g., "plant_a_1234567890" -> "Plant A")
-    final plantId = key.split('_')[0] + '_' + key.split('_')[1];
-    return plantId == 'plant_a' ? 'Plant A' : 'Plant B';
+    try {
+      // Handle different key formats
+      if (key.startsWith('plant1')) {
+        return 'Plant A';
+      } else if (key.startsWith('plant2')) {
+        return 'Plant B';
+      } else {
+        // For any other format, return a generic name
+        return 'Plant Data';
+      }
+    } catch (e) {
+      debugPrint('Error getting plant name: $e');
+      return 'Plant Data';
+    }
   }
 
   Future<void> _deleteEntriesByTimestamp(DateTime timestamp) async {

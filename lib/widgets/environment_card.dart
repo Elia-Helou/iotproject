@@ -1,18 +1,16 @@
 import 'package:flutter/material.dart';
 
-class PlantCard extends StatelessWidget {
-  final String title;
-  final Map<String, dynamic>? plantData;
+class EnvironmentCard extends StatelessWidget {
+  final Map<String, dynamic>? environmentData;
 
-  const PlantCard({
+  const EnvironmentCard({
     super.key,
-    required this.title,
-    required this.plantData,
+    required this.environmentData,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (plantData == null) {
+    if (environmentData == null) {
       return Card(
         elevation: 4,
         shape: RoundedRectangleBorder(
@@ -37,7 +35,7 @@ class PlantCard extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Colors.green.shade50,
+              Colors.blue.shade50,
               Colors.white,
             ],
           ),
@@ -52,15 +50,15 @@ class PlantCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    title,
+                    'Environment',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: Colors.green.shade800,
+                      color: Colors.blue.shade800,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   Icon(
                     Icons.arrow_forward_ios,
-                    color: Colors.green.shade700,
+                    color: Colors.blue.shade700,
                     size: 16,
                   ),
                 ],
@@ -84,26 +82,26 @@ class PlantCard extends StatelessWidget {
       childAspectRatio: 2.5,
       children: [
         _buildDataItem(
-          'Moisture',
-          '${plantData!['moisture']?.toStringAsFixed(1)}',
-          Icons.grass,
-          Colors.green,
+          'Temperature',
+          '${environmentData!['temperature']?.toStringAsFixed(1)}°C',
+          Icons.thermostat,
+          Colors.orange,
         ),
         _buildDataItem(
-          'Light',
-          '${plantData!['light']?.toStringAsFixed(1)}',
-          Icons.light_mode,
-          Colors.amber,
-        ),
-        _buildDataItem(
-          'Rain',
-          plantData!['rain'] == true ? 'Yes' : 'No',
+          'Humidity',
+          '${environmentData!['humidity']?.toStringAsFixed(1)}%',
           Icons.water_drop,
           Colors.blue,
         ),
         _buildDataItem(
-          'Pump',
-          plantData!['pump'] == true ? 'On' : 'Off',
+          'Air Quality',
+          '${environmentData!['gas']?.toStringAsFixed(1)}',
+          Icons.air,
+          Colors.grey,
+        ),
+        _buildDataItem(
+          'Water Tank',
+          environmentData!['waterTank'] == true ? 'Full' : 'Empty',
           Icons.water,
           Colors.lightBlue,
         ),

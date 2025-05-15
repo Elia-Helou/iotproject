@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../models/plant_data.dart';
 
 class PlantDetailScreen extends StatelessWidget {
   final String title;
-  final PlantData plantData;
+  final Map<String, dynamic> plantData;
 
   const PlantDetailScreen({
     super.key,
@@ -24,8 +23,6 @@ class PlantDetailScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildStatusCard(context),
-            const SizedBox(height: 24),
-            _buildChart(context),
             const SizedBox(height: 24),
             _buildDetailedInfo(context),
             const SizedBox(height: 24),
@@ -57,21 +54,21 @@ class PlantDetailScreen extends StatelessWidget {
                       children: [
                         _buildStatusIconValue(
                           context,
-                          Icons.thermostat,
-                          '${plantData.temperature.toStringAsFixed(1)}°C',
-                          _getTemperatureColor(plantData.temperature),
+                          Icons.grass,
+                          '${plantData['moisture']?.toStringAsFixed(1)}',
+                          _getMoistureColor(plantData['moisture']?.toDouble() ?? 0),
+                        ),
+                        _buildStatusIconValue(
+                          context,
+                          Icons.light_mode,
+                          '${plantData['light']?.toStringAsFixed(1)}',
+                          _getLightColor(plantData['light']?.toDouble() ?? 0),
                         ),
                         _buildStatusIconValue(
                           context,
                           Icons.water_drop,
-                          '${plantData.humidity.toStringAsFixed(1)}%',
-                          _getHumidityColor(plantData.humidity),
-                        ),
-                        _buildStatusIconValue(
-                          context,
-                          Icons.grass,
-                          '${plantData.moisture.toStringAsFixed(1)}',
-                          _getMoistureColor(plantData.moisture),
+                          plantData['rain'] == true ? 'Yes' : 'No',
+                          plantData['rain'] == true ? Colors.blue : Colors.grey,
                         ),
                       ],
                     ),
@@ -79,9 +76,9 @@ class PlantDetailScreen extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: const [
-                        Text('Temperature', style: TextStyle(fontSize: 12)),
-                        Text('Humidity', style: TextStyle(fontSize: 12)),
                         Text('Moisture', style: TextStyle(fontSize: 12)),
+                        Text('Light', style: TextStyle(fontSize: 12)),
+                        Text('Rain', style: TextStyle(fontSize: 12)),
                       ],
                     ),
                   ],
@@ -110,50 +107,6 @@ class PlantDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildChart(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Sensor Readings',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 200,
-              child: LineChart(
-                LineChartData(
-                  gridData: const FlGridData(show: false),
-                  titlesData: const FlTitlesData(show: false),
-                  borderData: FlBorderData(show: false),
-                  lineBarsData: [
-                    LineChartBarData(
-                      spots: [
-                        FlSpot(0, plantData.temperature),
-                        FlSpot(1, plantData.humidity),
-                        FlSpot(2, plantData.moisture),
-                        FlSpot(3, plantData.waterLevel),
-                        FlSpot(4, plantData.airQuality),
-                        FlSpot(5, plantData.light),
-                      ],
-                      isCurved: true,
-                      color: Colors.green,
-                      barWidth: 3,
-                      dotData: const FlDotData(show: false),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildDetailedInfo(BuildContext context) {
     return Card(
       child: Padding(
@@ -166,9 +119,10 @@ class PlantDetailScreen extends StatelessWidget {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 16),
-            _buildInfoRow('Water Level', '${plantData.waterLevel}%', Icons.water),
-            _buildInfoRow('Air Quality', '${plantData.airQuality}', Icons.air),
-            _buildInfoRow('Light Level', '${plantData.light}', Icons.light_mode),
+            _buildInfoRow('Moisture', '${plantData['moisture']?.toStringAsFixed(1)}', Icons.grass),
+            _buildInfoRow('Light', '${plantData['light']?.toStringAsFixed(1)}', Icons.light_mode),
+            _buildInfoRow('Rain', plantData['rain'] == true ? 'Yes' : 'No', Icons.water_drop),
+            _buildInfoRow('Pump', plantData['pump'] == true ? 'On' : 'Off', Icons.water),
           ],
         ),
       ),
@@ -227,21 +181,15 @@ class PlantDetailScreen extends StatelessWidget {
     );
   }
 
-  Color _getTemperatureColor(double temp) {
-    if (temp < 20) return Colors.blue;
-    if (temp > 30) return Colors.red;
-    return Colors.green;
-  }
-
-  Color _getHumidityColor(double humidity) {
-    if (humidity < 40) return Colors.orange;
-    if (humidity > 80) return Colors.blue;
-    return Colors.green;
-  }
-
   Color _getMoistureColor(double moisture) {
     if (moisture < 300) return Colors.red;
     if (moisture > 400) return Colors.blue;
+    return Colors.green;
+  }
+
+  Color _getLightColor(double light) {
+    if (light < 500) return Colors.orange;
+    if (light > 700) return Colors.amber;
     return Colors.green;
   }
 } 
