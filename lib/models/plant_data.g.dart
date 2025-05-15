@@ -17,34 +17,25 @@ class PlantDataAdapter extends TypeAdapter<PlantData> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return PlantData(
-      temperature: fields[0] as double,
-      humidity: fields[1] as double,
-      moisture: fields[2] as double,
-      waterLevel: fields[3] as double,
-      airQuality: fields[4] as double,
-      light: fields[5] as double,
-      timestamp: fields[6] as DateTime?,
+      moisture: fields[0] as double,
+      light: fields[1] as double,
+      rain: fields[2] as bool,
+      pump: fields[3] as bool,
     );
   }
 
   @override
   void write(BinaryWriter writer, PlantData obj) {
     writer
-      ..writeByte(7)
-      ..writeByte(0)
-      ..write(obj.temperature)
-      ..writeByte(1)
-      ..write(obj.humidity)
-      ..writeByte(2)
-      ..write(obj.moisture)
-      ..writeByte(3)
-      ..write(obj.waterLevel)
       ..writeByte(4)
-      ..write(obj.airQuality)
-      ..writeByte(5)
+      ..writeByte(0)
+      ..write(obj.moisture)
+      ..writeByte(1)
       ..write(obj.light)
-      ..writeByte(6)
-      ..write(obj.timestamp);
+      ..writeByte(2)
+      ..write(obj.rain)
+      ..writeByte(3)
+      ..write(obj.pump);
   }
 
   @override

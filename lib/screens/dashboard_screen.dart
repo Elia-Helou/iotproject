@@ -130,7 +130,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       }
                     },
                     child: PlantCard(
-                      title: 'Plant A',
+                      plantId: 'plant1',
                       plantData: provider.plants['plant1'],
                     ),
                   ),
@@ -151,7 +151,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       }
                     },
                     child: PlantCard(
-                      title: 'Plant B',
+                      plantId: 'plant2',
                       plantData: provider.plants['plant2'],
                     ),
                   ),

@@ -18,8 +18,17 @@ void main() async {
     // Register adapters
     Hive.registerAdapter(PlantDataAdapter());
     
+    // Clear existing boxes if they exist
+    if (await Hive.boxExists('plantData')) {
+      await Hive.deleteBoxFromDisk('plantData');
+    }
+    if (await Hive.boxExists('sensorData')) {
+      await Hive.deleteBoxFromDisk('sensorData');
+    }
+    
     // Open boxes
     await Hive.openBox<PlantData>('plantData');
+    await Hive.openBox('sensorData');
     
     runApp(const MyApp());
   } catch (e) {
@@ -38,7 +47,7 @@ class MyApp extends StatelessWidget {
       create: (context) {
         final provider = PlantProvider();
         // Initialize MQTT service
-        final mqttService = MqttService();
+        final mqttService = MQTTService();
         mqttService.setPlantProvider(provider);
         mqttService.connect();
         return provider;

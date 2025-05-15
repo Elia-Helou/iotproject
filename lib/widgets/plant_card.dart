@@ -1,80 +1,93 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../services/mqtt_service.dart';
+import '../providers/plant_provider.dart';
 
 class PlantCard extends StatelessWidget {
-  final String title;
+  final String plantId;
   final Map<String, dynamic>? plantData;
+  final MQTTService _mqttService = MQTTService();
 
-  const PlantCard({
+  PlantCard({
     super.key,
-    required this.title,
-    required this.plantData,
+    required this.plantId,
+    this.plantData,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (plantData == null) {
-      return Card(
-        elevation: 4,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: const Padding(
-          padding: EdgeInsets.all(16.0),
-          child: Center(child: Text('No data available')),
-        ),
-      );
-    }
+    return Consumer<PlantProvider>(
+      builder: (context, provider, child) {
+        // Try to get data from MQTT service first, then fall back to passed data
+        final data = plantId == 'plant1' 
+            ? _mqttService.getLastPlant1Data() ?? plantData
+            : _mqttService.getLastPlant2Data() ?? plantData;
 
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.green.shade50,
-              Colors.white,
-            ],
+        if (data == null) {
+          return Card(
+            elevation: 4,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Center(child: Text('No data available')),
+            ),
+          );
+        }
+
+        return Card(
+          elevation: 4,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: Colors.green.shade800,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Icon(
-                    Icons.arrow_forward_ios,
-                    color: Colors.green.shade700,
-                    size: 16,
-                  ),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.green.shade50,
+                  Colors.white,
                 ],
               ),
-              const SizedBox(height: 16),
-              _buildDataGrid(),
-            ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Plant $plantId',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: Colors.green.shade800,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Icon(
+                        Icons.arrow_forward_ios,
+                        color: Colors.green.shade700,
+                        size: 16,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  _buildDataGrid(data),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildDataGrid() {
+  Widget _buildDataGrid(Map<String, dynamic> data) {
     return GridView.count(
       crossAxisCount: 2,
       shrinkWrap: true,
@@ -85,26 +98,26 @@ class PlantCard extends StatelessWidget {
       children: [
         _buildDataItem(
           'Moisture',
-          '${plantData!['moisture']?.toStringAsFixed(1)}',
-          Icons.grass,
-          Colors.green,
+          '${data['moisture']}',
+          Icons.water_drop,
+          Colors.blue,
         ),
         _buildDataItem(
           'Light',
-          '${plantData!['light']?.toStringAsFixed(1)}',
+          '${data['light']}',
           Icons.light_mode,
           Colors.amber,
         ),
         _buildDataItem(
           'Rain',
-          plantData!['rain'] == true ? 'Yes' : 'No',
-          Icons.water_drop,
-          Colors.blue,
+          data['rain'] == true ? 'Yes' : 'No',
+          Icons.grain,
+          Colors.grey,
         ),
         _buildDataItem(
           'Pump',
-          plantData!['pump'] == true ? 'On' : 'Off',
-          Icons.water,
+          data['pump'] == true ? 'On' : 'Off',
+          Icons.opacity,
           Colors.lightBlue,
         ),
       ],

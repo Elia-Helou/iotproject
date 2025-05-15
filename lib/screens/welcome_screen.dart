@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'dashboard_screen.dart';
+import 'home_screen.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -50,7 +50,7 @@ class WelcomeScreen extends StatelessWidget {
                   onPressed: () {
                     Navigator.of(context).pushReplacement(
                       MaterialPageRoute(
-                        builder: (context) => const DashboardScreen(),
+                        builder: (context) => const HomeScreen(),
                       ),
                     );
                   },

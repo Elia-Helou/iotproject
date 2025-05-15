@@ -1,53 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../services/mqtt_service.dart';
+import '../providers/plant_provider.dart';
 
 class EnvironmentCard extends StatelessWidget {
   final Map<String, dynamic>? environmentData;
+  final MQTTService _mqttService = MQTTService();
 
-  const EnvironmentCard({
+  EnvironmentCard({
     super.key,
-    required this.environmentData,
+    this.environmentData,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (environmentData == null) {
-      return Card(
-        elevation: 4,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: const Padding(
-          padding: EdgeInsets.all(16.0),
-          child: Center(child: Text('No data available')),
-        ),
-      );
-    }
+    return Consumer<PlantProvider>(
+      builder: (context, provider, child) {
+        // Try to get data from MQTT service first, then fall back to passed data
+        final data = _mqttService.getLastEnvironmentData() ?? environmentData;
 
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.blue.shade50,
-              Colors.white,
-            ],
-          ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        if (data == null) {
+          return Card(
+            elevation: 4,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
                     'Environment',
@@ -56,23 +37,75 @@ class EnvironmentCard extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  Icon(
-                    Icons.arrow_forward_ios,
-                    color: Colors.blue.shade700,
-                    size: 16,
-                  ),
+                  const SizedBox(height: 16),
+                  if (!_mqttService.isConnected)
+                    const Text(
+                      'Connecting to MQTT broker...',
+                      style: TextStyle(color: Colors.orange),
+                    )
+                  else
+                    const Text(
+                      'No data available',
+                      style: TextStyle(color: Colors.grey),
+                    ),
                 ],
               ),
-              const SizedBox(height: 16),
-              _buildDataGrid(),
-            ],
+            ),
+          );
+        }
+
+        return Card(
+          elevation: 4,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-        ),
-      ),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.blue.shade50,
+                  Colors.white,
+                ],
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        'Environment',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: Colors.blue.shade800,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Icon(
+                        Icons.arrow_forward_ios,
+                        color: Colors.blue.shade700,
+                        size: 16,
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  _buildDataGrid(data),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 
-  Widget _buildDataGrid() {
+  Widget _buildDataGrid(Map<String, dynamic> data) {
     return GridView.count(
       crossAxisCount: 2,
       shrinkWrap: true,
@@ -83,25 +116,25 @@ class EnvironmentCard extends StatelessWidget {
       children: [
         _buildDataItem(
           'Temperature',
-          '${environmentData!['temperature']?.toStringAsFixed(1)}°C',
+          '${data['temperature']?.toStringAsFixed(1)}°C',
           Icons.thermostat,
           Colors.orange,
         ),
         _buildDataItem(
           'Humidity',
-          '${environmentData!['humidity']?.toStringAsFixed(1)}%',
+          '${data['humidity']?.toStringAsFixed(1)}%',
           Icons.water_drop,
           Colors.blue,
         ),
         _buildDataItem(
           'Air Quality',
-          '${environmentData!['gas']?.toStringAsFixed(1)}',
+          '${data['gas']?.toStringAsFixed(0)}',
           Icons.air,
           Colors.grey,
         ),
         _buildDataItem(
           'Water Tank',
-          environmentData!['waterTank'] == true ? 'Full' : 'Empty',
+          data['waterTank'] == true ? 'Full' : 'Empty',
           Icons.water,
           Colors.lightBlue,
         ),

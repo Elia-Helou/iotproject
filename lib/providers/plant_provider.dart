@@ -16,24 +16,8 @@ class PlantProvider with ChangeNotifier {
     debugPrint('Plant2 data: ${_plants['plant2']?.toJson()}');
     
     return {
-      'plant1': _plants['plant1'] != null ? {
-        'moisture': _plants['plant1']!.moisture,
-        'light': _plants['plant1']!.light,
-        'temperature': _plants['plant1']!.temperature,
-        'humidity': _plants['plant1']!.humidity,
-        'waterLevel': _plants['plant1']!.waterLevel,
-        'airQuality': _plants['plant1']!.airQuality,
-        'timestamp': _plants['plant1']!.timestamp.toIso8601String(),
-      } : {},
-      'plant2': _plants['plant2'] != null ? {
-        'moisture': _plants['plant2']!.moisture,
-        'light': _plants['plant2']!.light,
-        'temperature': _plants['plant2']!.temperature,
-        'humidity': _plants['plant2']!.humidity,
-        'waterLevel': _plants['plant2']!.waterLevel,
-        'airQuality': _plants['plant2']!.airQuality,
-        'timestamp': _plants['plant2']!.timestamp.toIso8601String(),
-      } : {},
+      'plant1': _plants['plant1']?.toJson() ?? {},
+      'plant2': _plants['plant2']?.toJson() ?? {},
     };
   }
 
@@ -56,15 +40,10 @@ class PlantProvider with ChangeNotifier {
     try {
       final box = await Hive.openBox<PlantData>('plantData');
       debugPrint('Loading initial data from Hive');
-      debugPrint('Box contents: ${box.values.toList()}');
       
       if (box.isNotEmpty) {
-        // Try to get the latest data for each plant
         final plant1Data = box.get('plant1');
         final plant2Data = box.get('plant2');
-        
-        debugPrint('Found plant1 data: ${plant1Data?.toJson()}');
-        debugPrint('Found plant2 data: ${plant2Data?.toJson()}');
         
         if (plant1Data != null || plant2Data != null) {
           _plants = {
@@ -73,16 +52,13 @@ class PlantProvider with ChangeNotifier {
           };
           notifyListeners();
         } else {
-          // If no data found, fetch from API
           await fetchPlantData();
         }
       } else {
-        // If box is empty, fetch from API
         await fetchPlantData();
       }
     } catch (e) {
       debugPrint('Error loading initial data: $e');
-      // If error occurs, fetch from API
       await fetchPlantData();
     }
   }
@@ -99,32 +75,15 @@ class PlantProvider with ChangeNotifier {
       
       _plants = newData;
       
-      // Update environment data with values from plant data
-      if (_plants['plant1'] != null) {
-        _environmentData = {
-          'temperature': _plants['plant1']!.temperature,
-          'humidity': _plants['plant1']!.humidity,
-          'gas': _plants['plant1']!.airQuality,
-          'waterTank': _plants['plant1']!.waterLevel > 50,
-        };
-      }
-      
-      // Save to Hive with timestamps
+      // Save to Hive
       final box = await Hive.openBox<PlantData>('plantData');
-      
-      // Store data with timestamp as part of the key
-      for (var entry in newData.entries) {
-        final timestamp = entry.value.timestamp.millisecondsSinceEpoch;
-        final key = '${entry.key}_$timestamp';
-        await box.put(key, entry.value);
-      }
+      await box.putAll(_plants);
       
       _error = null;
     } catch (e) {
       _error = 'Failed to fetch plant data: $e';
       debugPrint(_error);
       
-      // Try to load from Hive if fetch fails
       try {
         final box = await Hive.openBox<PlantData>('plantData');
         if (box.isNotEmpty) {
@@ -157,33 +116,19 @@ class PlantProvider with ChangeNotifier {
     debugPrint('Plant1 data: $plant1Data');
     debugPrint('Plant2 data: $plant2Data');
     debugPrint('Environment data: $environmentData');
-    
-    // Extract shared environment values
-    double temperature = environmentData['temperature']?.toDouble() ?? 0.0;
-    double humidity = environmentData['humidity']?.toDouble() ?? 0.0;
-    double airQuality = environmentData['gas']?.toDouble() ?? 0.0;
-    double waterLevel = environmentData['waterTank'] == true ? 100.0 : 0.0;
-
-    final now = DateTime.now();
 
     _plants['plant1'] = PlantData(
-      temperature: temperature,
-      humidity: humidity,
-      moisture: plant1Data['moisture']?.toDouble() ?? 0.0,
-      waterLevel: waterLevel,
-      airQuality: airQuality,
-      light: plant1Data['light']?.toDouble() ?? 0.0,
-      timestamp: now,
+      moisture: plant1Data['moisture'].toDouble(),
+      light: plant1Data['light'].toDouble(),
+      rain: plant1Data['rain'] ?? false,
+      pump: plant1Data['pump'] ?? false,
     );
 
     _plants['plant2'] = PlantData(
-      temperature: temperature,
-      humidity: humidity,
-      moisture: plant2Data['moisture']?.toDouble() ?? 0.0,
-      waterLevel: waterLevel,
-      airQuality: airQuality,
-      light: plant2Data['light']?.toDouble() ?? 0.0,
-      timestamp: now,
+      moisture: plant2Data['moisture'].toDouble(),
+      light: plant2Data['light'].toDouble(),
+      rain: plant2Data['rain'] ?? false,
+      pump: plant2Data['pump'] ?? false,
     );
 
     _environmentData = environmentData;
@@ -195,15 +140,6 @@ class PlantProvider with ChangeNotifier {
   Future<void> _saveToHive() async {
     try {
       final box = await Hive.openBox<PlantData>('plantData');
-      
-      // Store historical data
-      for (var entry in _plants.entries) {
-        final timestamp = entry.value.timestamp.millisecondsSinceEpoch;
-        final key = '${entry.key}_$timestamp';
-        await box.put(key, entry.value);
-      }
-      
-      // Store latest data
       await box.putAll(_plants);
       
       debugPrint('Saved to Hive:');
