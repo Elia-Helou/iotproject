@@ -31,7 +31,12 @@ class _DatabaseViewScreenState extends State<DatabaseViewScreen> {
       for (var key in box.keys) {
         final plantData = box.get(key);
         if (plantData != null && key.toString().contains('_')) {
-          contents.add(MapEntry(key.toString(), plantData));
+          // Only include entries that have a timestamp in their key
+          // This excludes the 'plant_a' and 'plant_b' entries
+          final parts = key.toString().split('_');
+          if (parts.length >= 3) {  // Should be like 'plant_a_1234567890'
+            contents.add(MapEntry(key.toString(), plantData));
+          }
         }
       }
       
